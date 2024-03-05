@@ -1,3 +1,6 @@
+sshBackup/
+keys/know_hosts
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

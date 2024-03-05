@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# ssh config generator for dynamic ansible inventories
+# ssh config generator for (dynamic) ansible inventories
 import yaml
 from yaml.loader import SafeLoader
 
@@ -16,56 +16,49 @@ from pathlib import Path
 import shutil
 from datetime import datetime
 
-# define users home directory
-home = Path.home()
-
-currentDir = Path.cwd()
-
-sshDir = Path(home, '.ssh')
-sshArchive = Path(home, '.sshArchive')
-sshArchive.mkdir(parents=True, exist_ok=True)
-sshKeys = Path(home, '.sshKeys')
-known_hosts = Path(sshDir, 'known_hosts')
-# safe known_hosts
+import config
+# make Backup folder
+config.sshBackup.mkdir(parents=True, exist_ok=True)
+# safe known_hosts (copy it in the sshkeys folder)
+known_hosts = Path(config.ssh_dir, 'known_hosts')
 try:
-    shutil.copy(known_hosts, sshKeys)
+    shutil.copy(Path(config.ssh_dir, 'known_hosts'), config.sshKeys)
 except FileNotFoundError as err:
     print(err)
-
-if Path(sshDir).is_dir():
-    sshDir.rename(Path(home, sshArchive, f'ssh-{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}'))   
-sshDir.mkdir(parents=True, exist_ok=True)
-
-sshConfig = Path(sshDir, 'config')
+# move the current ssh folder into Backup
+if Path(config.ssh_dir).is_dir():
+    config.ssh_dir.rename( Path(config.sshBackup, f'ssh-{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}') )   
+# create ssh directory
+config.ssh_dir.mkdir(parents=True, exist_ok=True)
+sshConfig = Path(config.ssh_dir, 'config')
 # delete content of the file
 open(sshConfig, 'w').close()
 sshConfig.chmod(0o000600)
 
-sshKnownhostsFile = Path(sshDir, 'known_hosts')
-open(sshKnownhostsFile, 'w').close()
-
-if Path(sshKeys).is_dir() and Path(sshDir).is_dir():
-    shutil.copytree(sshKeys, sshDir, dirs_exist_ok=True )
+# copy ssh keys and known_hosts back to new ssh dir
+if config.sshKeys.is_dir() and config.ssh_dir.is_dir():
+    shutil.copytree(config.sshKeys, config.ssh_dir, dirs_exist_ok=True )
 else:
     print("create a ~/.sshKeys directory and put your keys there")
     exit()
 
-import paramiko
 
-def add_ssh_host_key(host, known_hosts_file=None)->None:
-    try:
-        transport = paramiko.Transport(host)
-        transport.start_client(event=None,timeout=10)
-    except paramiko.SSHException:
-        print("failed to negotiate with ", host) 
-        return
+# import paramiko
+    
+# def add_ssh_host_key(host, known_hosts_file=None)->None:
+#     try:
+#         transport = paramiko.Transport(host)
+#         transport.start_client(event=None,timeout=10)
+#     except paramiko.SSHException:
+#         print("failed to negotiate with ", host) 
+#         return
 
-    key = transport.get_remote_server_key()
-    hostfile = paramiko.HostKeys(filename=known_hosts_file)
-    hostfile.add(hostname = host, key=key, keytype=key.get_name())
+#     key = transport.get_remote_server_key()
+#     hostfile = paramiko.HostKeys(filename=known_hosts_file)
+#     hostfile.add(hostname = host, key=key, keytype=key.get_name())
 
-    hostfile.save(filename=known_hosts_file)
-    transport.close()
+#     hostfile.save(filename=known_hosts_file)
+#     transport.close()
 
 def generate_ssh_from_ansible(inventory_file, proxyjump=False):
 
@@ -97,8 +90,8 @@ def generate_ssh_from_ansible(inventory_file, proxyjump=False):
                 #print( "User ",  host_vars['ansible_user'])
             # private key
             if 'ansible_ssh_private_key_file' in host_vars:
-                print("\t", "IdentityFile ", Path(sshDir, host_vars['ansible_ssh_private_key_file']), file=f)
-                #print("IdentityFile ", Path(sshDir, host_vars['ansible_ssh_private_key_file']))
+                print("\t", "IdentityFile ", Path(config.ssh_dir, host_vars['ansible_ssh_private_key_file']), file=f)
+                #print("IdentityFile ", Path(config.ssh_dir, host_vars['ansible_ssh_private_key_file']))
             if 'DynamicForward' in host_vars:
                 print("\t", "DynamicForward ", host_vars['DynamicForward'], file=f)
             if 'Port' in host_vars:
@@ -119,8 +112,8 @@ def generate_ssh_from_ansible(inventory_file, proxyjump=False):
 
 
 def main(proxyjump=False):
-    inventoryDir = Path(currentDir, 'inventory')
-    for inventory_file in inventoryDir.iterdir():
+    
+    for inventory_file in config.inventory.iterdir():
         if inventory_file.is_file():
             print("Inventory File:", inventory_file)
             generate_ssh_from_ansible(str(inventory_file), proxyjump)
