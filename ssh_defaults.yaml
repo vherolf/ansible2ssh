@@ -1,0 +1,7 @@
+---
+Compression: "yes"
+SendEnv: "LANG LC_*"
+AddKeysToAgent: "yes"
+ForwardAgent:  "no"
+ForwardX11:  "no"
+IdentitiesOnly: "yes"

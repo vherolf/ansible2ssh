@@ -1,0 +1,98 @@
+---
+all:
+  hosts:
+    virt1:
+      ansible_host: virt1.example.com
+      description: "virt server 1"
+    virt2:
+      ansible_host: virt2.example.com
+      description: "Workstation with Ubuntu"
+    gate:
+      # this can be any host external available
+      ansible_host: gate.extern.example.com
+      description: "ssh gateway"
+    zebralabel:
+      ansible_host: "labelprinter.example.com"
+      ansible_user: "ubuntu"
+      description: "Cups server for Zebra Label printer"
+    devbox1:
+      ansible_host: "devbox1.example.com"
+      description: "test server"
+    node1I:
+      ansible_host: node1I.example.com
+      description: "ceph node 1"
+      rccmd_license: "xxxxxx"
+      ipadress_external: "192.168.1.100"
+      macaddress_external: "xx:xx:xx:xx:xx:xx"
+      ipadress_internal: "192.168.2.100"
+      macaddress_internal: "xx:xx:xx:xx:xx:xx"
+    node2I:
+      ansible_host: node2I.example.com
+      description: "ceph node 2"
+      rccmd_license: "xxxxxx"
+      ipadress_external: "192.168.1.101"
+      macaddress_external: "xx:xx:xx:xx:xx:xx"
+      ipadress_internal: "192.168.2.101"
+      macaddress_internal: "xx:xx:xx:xx:xx:xx"
+    node3I:
+      ansible_host: node3I.example.com
+      description: "ceph node 3"
+      rccmd_license: "xxxxxx"
+      ipadress_external: "192.168.1.102"
+      macaddress_external: "xx:xx:xx:xx:xx:xx"
+      ipadress_internal: "192.168.2.102"
+      macaddress_internal: "xx:xx:xx:xx:xx:xx"
+    node4I:
+      ansible_host: node4I.example.com
+      description: "ceph node 4"
+      rccmd_license: "xxxxxx"
+      ipadress_external: "192.168.1.103"
+      macaddress_external: "xx:xx:xx:xx:xx:xx"
+      ipadress_internal: "192.168.2.103"
+      macaddress_internal: "xx:xx:xx:xx:xx:xx"
+    testroom:
+      ansible_host: "testroom.example.com"
+      ansible_user: "videouser"
+      description: "the test room in the lab"
+
+  vars:
+    ansible_ssh_private_key_file: "ssh_key_work"
+    ansible_user: "masterblaster"
+    ForwardAgent: "yes"
+    ForwardX11: "yes"
+    ForwardX11Trusted: "yes"
+    IdentitiesOnly: "yes"
+  children:
+    # groups for definition
+    server:
+      hosts:
+        node1I:
+        node2I:
+        node3I:
+        node4I:
+      vars:
+        ProxyJump: "gate"
+    workstations:
+      hosts:
+        testroom:
+      vars:
+        ProxyJump: "gate"
+    virtualserver:
+      hosts:
+        virt1:
+        virt2:
+        virt3:
+      vars:
+        ProxyJump: "gate"
+    external:
+      hosts:
+        gate:
+    # deploy groups
+    ceph:
+      hosts:
+        node1I:
+        node2I:
+        node3I:
+        node4I:
+      vars:
+        ProxyJump: "gate"
