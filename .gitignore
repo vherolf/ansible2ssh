@@ -1,5 +1,5 @@
 sshBackup/
-keys/know_hosts
+keys/known_hosts
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
