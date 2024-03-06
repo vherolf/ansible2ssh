@@ -113,7 +113,7 @@ def generate_ssh_from_ansible(inventory_file, proxyjump=False):
 
 def main(proxyjump=False):
     
-    for inventory_file in config.inventory.glob('**/*.yaml'):
+    for inventory_file in config.inventory.glob('*.yaml'):
         print(inventory_file)
         if inventory_file.is_file():
             print("Inventory File:", inventory_file)
